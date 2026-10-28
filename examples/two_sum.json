@@ -1,0 +1,18 @@
+{
+  "problem_statement": "Read two integers a and b from standard input (separated by whitespace) and print their sum a + b on a single line.",
+  "language": "python",
+  "test_cases": [
+    {
+      "input": "2 3\n",
+      "expected_output": "5"
+    },
+    {
+      "input": "-10 4\n",
+      "expected_output": "-6"
+    },
+    {
+      "input": "1000000000 1000000000\n",
+      "expected_output": "2000000000"
+    }
+  ]
+}

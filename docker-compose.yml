@@ -1,0 +1,73 @@
+# =========================================================================
+# docker-compose for the Agentic AI Workflow Engine.
+#
+# Services:
+#   redis   - Celery broker + result backend.
+#   web     - Django REST API (Gunicorn).
+#   worker  - Celery worker running the agentic loop.
+#
+# Both `web` and `worker` mount the host Docker socket so the engine can spawn
+# ephemeral *sibling* sandbox containers (gcc / python) on the host daemon.
+#
+# SECURITY NOTE: mounting /var/run/docker.sock grants the container control of
+# the host Docker daemon. This is the standard sibling-container pattern and is
+# acceptable for a trusted backend, but treat the web/worker containers as
+# privileged. For stricter isolation, run the sandbox on a separate, dedicated
+# Docker host or use a rootless/remote daemon via DOCKER_HOST.
+# =========================================================================
+
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  web:
+    build: .
+    command: ["web"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Ensure the broker points at the compose service name.
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      DOCKER_HOST: unix:///var/run/docker.sock
+      SANDBOX_TMP_ROOT: /tmp/agentic-sandbox
+    ports:
+      - "8000:8000"
+    volumes:
+      # Sibling-container access to the host Docker daemon.
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Bind the SAME host path to the SAME container path. This is essential:
+      # when the worker asks the host daemon to bind-mount a sandbox workdir,
+      # the daemon resolves that path on the HOST filesystem. Identical paths
+      # on both sides make the bind source valid in the sibling container.
+      - ${SANDBOX_TMP_HOST:-/tmp/agentic-sandbox}:/tmp/agentic-sandbox
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: ["worker"]
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      DOCKER_HOST: unix:///var/run/docker.sock
+      # Where sandbox working dirs are created. Must be IDENTICAL on host and
+      # container so sibling bind-mounts resolve correctly on the host daemon.
+      SANDBOX_TMP_ROOT: /tmp/agentic-sandbox
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${SANDBOX_TMP_HOST:-/tmp/agentic-sandbox}:/tmp/agentic-sandbox
+    depends_on:
+      redis:
+        condition: service_healthy

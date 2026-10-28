@@ -1,0 +1,18 @@
+{
+  "problem_statement": "Maximum subarray sum (Kadane's algorithm). The first line contains an integer N, the number of elements. The second line contains N space-separated integers. Print the maximum sum obtainable from any non-empty contiguous subarray.",
+  "language": "cpp",
+  "test_cases": [
+    {
+      "input": "9\n-2 1 -3 4 -1 2 1 -5 4\n",
+      "expected_output": "6"
+    },
+    {
+      "input": "1\n-5\n",
+      "expected_output": "-5"
+    },
+    {
+      "input": "5\n1 2 3 4 5\n",
+      "expected_output": "15"
+    }
+  ]
+}

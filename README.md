@@ -82,7 +82,7 @@ the host Docker daemon via a mounted socket and launch sandbox containers as
 siblings (no Docker-in-Docker).
 
 > ⚠️ Mounting `/var/run/docker.sock` grants host-daemon control to the backend
-> containers. See [`details.md`](../details.md) for hardening options.
+> containers.
 
 ---
 
@@ -254,5 +254,5 @@ project/
 
 ## 📝 License
 
-MIT. See [`details.md`](../details.md) for the full feature list and design notes.
+MIT.
 
